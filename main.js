@@ -1,17 +1,19 @@
 var cavas;
 var ctx;
 var background;
-var result = [];
-var min = -1;
-var value = -1;
+var qrElement;
+var result;
+var index;
 
 window.onload = () => {
   cavas = new OffscreenCanvas(85, 108);
   background = document.querySelector("[data-image='background']");
+  qrElement = document.querySelector("[data-image='qr']");
   ctx = cavas.getContext("2d");
 
   search();
   draw();
+  drawQR();
 };
 
 function draw() {
@@ -19,7 +21,7 @@ function draw() {
   ctx.drawImage(background, 0, 0);
 
   qr = new QRious({
-    value: "https://webxr.run/XVPRm7NAGPARr#" + value,
+    value: "https://webxr.run/XVPRm7NAGPARr#" + index,
     backgroundAlpha: 0,
     level: "H",
   });
@@ -33,39 +35,48 @@ function draw() {
   ctxCanvas.putImageData(blob, 0, 0);
 }
 
-async function search() {
-  for (let index = 0; index < 5400; index++) {
-    result.push(await render(index));
+function drawQR() {
+  qr = new QRious({
+    element: qrElement,
+    value: "https://webxr.run/XVPRm7NAGPARr#" + index,
+    backgroundAlpha: 0,
+    level: "H",
+  });
+}
 
-    let newMin = Math.min(...result);
-    if (min > newMin || min == -1) {
-      min = newMin;
-      value = result.indexOf(newMin);
-      console.log("index:", index, "min:", min, "value:", value);
+async function search() {
+  for (index = 0; index <= 1024; index++) {
+    result = await render();
+    console.log("index:", index, "result:", result);
+    if (result) {
+      break;
     }
   }
 }
 
-async function render(input) {
+async function render() {
   ctx.clearRect(8, 18, 72, 72);
   ctx.drawImage(background, 0, 0);
-  let backgroundCTX = ctx.getImageData(8, 18, 72, 72);
 
   qr = await new QRious({
-    value: "https://webxr.run/XVPRm7NAGPARr#" + input,
+    value: "https://webxr.run/XVPRm7NAGPARr#" + index,
     backgroundAlpha: 0,
     level: "H",
   });
 
-  blob = await qr.image;
+  let blob = await qr.image;
   ctx.drawImage(blob, 8, 18, 72, 72);
-  let qrCTX = ctx.getImageData(8, 18, 72, 72);
 
-  let dif = 0;
+  let dif = false;
 
-  for (let index = 0; index < backgroundCTX.data.length; index++) {
-    dif = dif + (backgroundCTX.data[index] - qrCTX.data[index]);
-  }
+  blob = await cavas.convertToBlob();
+  let a = new FileReader();
+  a.readAsDataURL(blob);
+  a.onload = function (e) {
+    QCodeDecoder().decodeFromImage(e.target.result, (er, res) => {
+      dif = res;
+    });
+  };
 
   return dif;
 }
