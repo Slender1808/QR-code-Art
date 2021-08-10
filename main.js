@@ -4,20 +4,14 @@ var background;
 var result = [];
 var min = -1;
 var value = -1;
-var ind = 0;
 
-window.onload = async () => {
+window.onload = () => {
   cavas = new OffscreenCanvas(85, 108);
   background = document.querySelector("[data-image='background']");
   ctx = cavas.getContext("2d");
 
-  for (let index = 0; index < 10; index++) {
-    await search();
-    console.log("ind:", ind, "min:", min, "value:", value);
-    ind++;
-  }
-
-  await draw();
+  search();
+  draw();
 };
 
 function draw() {
@@ -35,20 +29,20 @@ function draw() {
 
   const ctxCanvas = document.querySelector("canvas").getContext("2d");
 
-  const blob = ctx.getImageData(0, 0, 85, 108)
-  ctxCanvas.putImageData(blob,0,0)
+  const blob = ctx.getImageData(0, 0, 85, 108);
+  ctxCanvas.putImageData(blob, 0, 0);
 }
 
 async function search() {
-  for (let index = 0 * ind; index < 1 * (ind + 1); index++) {
+  for (let index = 0; index < 5400; index++) {
     result.push(await render(index));
-  }
 
-  let newMin = Math.min(...result);
-
-  if (min > newMin || min == -1) {
-    min = newMin;
-    value = result.indexOf(newMin);
+    let newMin = Math.min(...result);
+    if (min > newMin || min == -1) {
+      min = newMin;
+      value = result.indexOf(newMin);
+      console.log("index:", index, "min:", min, "value:", value);
+    }
   }
 }
 
@@ -63,7 +57,7 @@ async function render(input) {
     level: "H",
   });
 
-  blob = await qr.image
+  blob = await qr.image;
   ctx.drawImage(blob, 8, 18, 72, 72);
   let qrCTX = ctx.getImageData(8, 18, 72, 72);
 
