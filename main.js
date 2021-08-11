@@ -14,7 +14,7 @@ var final;
 var tamanhoBusca;
 var x;
 var y;
-Start(254);
+Start(2);
 async function Start(input) {
   tamanhoBusca = input;
   min = -1;
@@ -35,7 +35,7 @@ async function Start(input) {
   drawQR();
 }
 
-function draw() {
+async function draw() {
   //ctx.globalCompositeOperation = "source-over";
   ctx.clearRect(0, 0, 108, 108);
   ctx.drawImage(background, 0, 0);
@@ -47,11 +47,12 @@ function draw() {
   });
 
   //console.log(qr.toDataURL());
-  ctx.drawImage(qr.image, minX, minY, 83, 83);
+  let blob = await qr.image;
+  ctx.drawImage(blob, minX, minY, 83, 83);
 
   const ctxCanvas = document.querySelector("canvas").getContext("2d");
 
-  const blob = ctx.getImageData(0, 0, 108, 108);
+  blob = ctx.getImageData(0, 0, 108, 108);
   ctxCanvas.putImageData(blob, 0, 0);
 }
 
@@ -65,7 +66,7 @@ function drawQR() {
 }
 
 async function search() {
-  for (x = 0; x < 26; x++) {
+  for (x = 0; x < 10; x++) {
     for (y = 0; y < 26; y++) {
       for (index = 0; index <= tamanhoBusca; index++) {
         result[index] = await render();
@@ -79,7 +80,13 @@ async function search() {
           console.log("index:", index, "min:", min, "x", x, "y", y);
         }
       }
+      console.log("index:", index, "min:", min, "x", x, "y", y);
+      minX = x;
+      minY = y;
+      draw();
+      drawQR();
     }
+    console.log("X", x, "Y", y);
   }
 }
 
@@ -95,12 +102,16 @@ async function render() {
 
   let blob = await qr.image;
   ctx.drawImage(blob, x, y, 83, 83);
-  let qrCTX = ctx.getImageData(0, 0, 108, 108).data;
 
   let dif = 0;
 
-  for (let index = 0; index < backgroundCTX.length; index++) {
-    dif = dif + (backgroundCTX[index] - qrCTX[index]);
+  //calcDif()
+  async function calcDif() {
+    let qrCTX = ctx.getImageData(0, 0, 108, 108).data;
+
+    for (let index = 0; index < backgroundCTX.length; index++) {
+      dif = dif + (backgroundCTX[index] - qrCTX[index]);
+    }
   }
 
   blob = await cavas.convertToBlob();
@@ -113,6 +124,8 @@ async function render() {
       if (res) {
         console.log("Resposta: ", res, "index:", index, "min:", min);
         final = res;
+        minX = x;
+        minY = y;
         index = tamanhoBusca;
       }
     });
