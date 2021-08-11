@@ -5,14 +5,22 @@ var backgroundCTX;
 var qrElement;
 var result = [];
 var index;
-var min = -1;
-var value = 0;
+var min;
+var minX;
+var minY;
+var value;
 var decoder = new QCodeDecoder();
-var final = -1;
-var tamanhoBusca = 2048;
-
+var final;
+var tamanhoBusca;
+var x;
+var y;
+Start(254);
 async function Start(input) {
-  tamanhoBusca = input
+  tamanhoBusca = input;
+  min = -1;
+  minX = -1;
+  minY = -1;
+  value = 0;
   background = document.querySelector("[data-image='background']");
   qrElement = document.querySelector("[data-image='qr']");
   cavas = new OffscreenCanvas(108, 108);
@@ -39,7 +47,7 @@ function draw() {
   });
 
   //console.log(qr.toDataURL());
-  ctx.drawImage(qr.image, 6, 15, 76, 76);
+  ctx.drawImage(qr.image, minX, minY, 83, 83);
 
   const ctxCanvas = document.querySelector("canvas").getContext("2d");
 
@@ -57,14 +65,20 @@ function drawQR() {
 }
 
 async function search() {
-  for (index = 0; index <= tamanhoBusca; index++) {
-    result.push(await render());
+  for (x = 0; x < 26; x++) {
+    for (y = 0; y < 26; y++) {
+      for (index = 0; index <= tamanhoBusca; index++) {
+        result[index] = await render();
 
-    let newMin = Math.min(...result);
-    if (min > newMin || min == -1) {
-      min = newMin;
-      value = result.indexOf(newMin);
-      console.log("index:", index, "min:", min, "value:", value);
+        let newMin = Math.min(...result);
+        if (min > newMin || min == -1) {
+          min = newMin;
+          value = result.indexOf(newMin);
+          minX = x;
+          minY = y;
+          console.log("index:", index, "min:", min, "x", x, "y", y);
+        }
+      }
     }
   }
 }
@@ -80,7 +94,7 @@ async function render() {
   });
 
   let blob = await qr.image;
-  ctx.drawImage(blob, 6, 15, 76, 76);
+  ctx.drawImage(blob, x, y, 83, 83);
   let qrCTX = ctx.getImageData(0, 0, 108, 108).data;
 
   let dif = 0;
@@ -97,7 +111,7 @@ async function render() {
     image.src = e.target.result;
     decoder.decodeFromImage(image, (err, res) => {
       if (res) {
-        console.log("Resposta: ", res);
+        console.log("Resposta: ", res, "index:", index, "min:", min);
         final = res;
         index = tamanhoBusca;
       }
