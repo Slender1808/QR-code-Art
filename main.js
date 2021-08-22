@@ -14,7 +14,7 @@ var final;
 var tamanhoBusca;
 var x;
 var y;
-Start(2);
+Start(999);
 async function Start(input) {
   tamanhoBusca = input;
   min = -1;
@@ -41,7 +41,7 @@ async function draw() {
   ctx.drawImage(background, 0, 0);
 
   qr = new QRious({
-    value: "https://webxr.run/XVPRm7NAGPARr#" + value,
+    value: "https://webxr.run/XVPRm7NAGPARr#" + String.fromCharCode(index),
     backgroundAlpha: 0,
     level: "H",
   });
@@ -59,34 +59,36 @@ async function draw() {
 function drawQR() {
   qr = new QRious({
     element: qrElement,
-    value: "https://webxr.run/XVPRm7NAGPARr#" + value,
+    value: "https://webxr.run/XVPRm7NAGPARr#" + index,
     backgroundAlpha: 1,
     level: "H",
   });
 }
 
 async function search() {
-  for (x = 0; x < 10; x++) {
-    for (y = 0; y < 26; y++) {
+  for (x = 0; x < 5; x++) {
+    for (y = 0; y < 24; y++) {
       for (index = 0; index <= tamanhoBusca; index++) {
-        result[index] = await render();
-
-        let newMin = Math.min(...result);
-        if (min > newMin || min == -1) {
-          min = newMin;
-          value = result.indexOf(newMin);
+        await render();
+        if (index % 100 == 0) {
+          console.log("index:", index, "x", x, "y", y);
           minX = x;
           minY = y;
-          console.log("index:", index, "min:", min, "x", x, "y", y);
+          draw();
+          drawQR();
         }
       }
-      console.log("index:", index, "min:", min, "x", x, "y", y);
+      console.log("index:", index, "x", x, "y", y);
       minX = x;
       minY = y;
       draw();
       drawQR();
     }
-    console.log("X", x, "Y", y);
+    console.log("index:", index, "x", x, "y", y);
+    minX = x;
+    minY = y;
+    draw();
+    drawQR();
   }
 }
 
@@ -100,17 +102,29 @@ async function render() {
     level: "H",
   });
 
-  let blob = await qr.image;
-  ctx.drawImage(blob, x, y, 83, 83);
-
-  let dif = 0;
-
+  let img = new Image();
+  img.src = qr.toDataURL();
+  img.onload = function () {
+    ctx.drawImage(img, 0, 0, 83, 83);
+  };
+  
   //calcDif()
   async function calcDif() {
+    let dif = 0;
     let qrCTX = ctx.getImageData(0, 0, 108, 108).data;
 
     for (let index = 0; index < backgroundCTX.length; index++) {
       dif = dif + (backgroundCTX[index] - qrCTX[index]);
+    }
+
+    result[index] = dif;
+    let newMin = Math.min(...result);
+    if (min > newMin || min == -1) {
+      min = newMin;
+      value = result.indexOf(newMin);
+      minX = x;
+      minY = y;
+      console.log("index:", index, "min:", min, "x", x, "y", y);
     }
   }
 
@@ -130,6 +144,4 @@ async function render() {
       }
     });
   };
-
-  return dif;
 }
