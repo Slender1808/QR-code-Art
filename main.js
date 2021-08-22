@@ -1,147 +1,123 @@
-var cavas;
+var canvas;
 var ctx;
 var background;
-var backgroundCTX;
-var qrElement;
-var result = [];
-var index;
-var min;
-var minX;
-var minY;
-var value;
+var index = 0;
+var tamanhoBusca = 9999;
 var decoder = new QCodeDecoder();
-var final;
-var tamanhoBusca;
-var x;
-var y;
-Start(999);
-async function Start(input) {
-  tamanhoBusca = input;
-  min = -1;
-  minX = -1;
-  minY = -1;
-  value = 0;
+var ctxCanvas;
+var backgroundCTX;
+var result = [];
+var min = -1;
+var sizeQR = 121;
+var mask;
+var sizeMask = 2.2;
+
+Start();
+async function Start() {
   background = document.querySelector("[data-image='background']");
-  qrElement = document.querySelector("[data-image='qr']");
-  cavas = new OffscreenCanvas(108, 108);
-  ctx = cavas.getContext("2d");
-  ctx.clearRect(0, 0, 108, 108);
-  ctx.drawImage(background, 0, 0);
-  backgroundCTX = ctx.getImageData(0, 0, 108, 108).data;
+  ctx = new OffscreenCanvas(
+    background.width * 2,
+    background.height * 2
+  ).getContext("2d");
+  ctx.drawImage(background, 0, 0, background.width * 2, background.height * 2);
 
-  await search();
-  console.log("Final");
-  draw();
-  drawQR();
-}
+  backgroundCTX = ctx.getImageData(
+    (background.width * 2) / 2 - sizeQR / 2,
+    (background.width * 2) / 2 - sizeQR / 2,
+    sizeQR,
+    sizeQR
+  );
 
-async function draw() {
-  //ctx.globalCompositeOperation = "source-over";
-  ctx.clearRect(0, 0, 108, 108);
-  ctx.drawImage(background, 0, 0);
+  mask = ctx.getImageData(
+    (background.width * 2) / 2 - sizeQR / (sizeMask * 2),
+    (background.height * 2) / 2 - sizeQR / (sizeMask * 2),
+    sizeQR / sizeMask,
+    sizeQR / sizeMask
+  );
 
-  qr = new QRious({
-    value: "https://webxr.run/XVPRm7NAGPARr#" + String.fromCharCode(index),
-    backgroundAlpha: 0,
-    level: "H",
-  });
+  ctxCanvas = document.querySelector("canvas");
+  ctxCanvas.width = background.width * 2;
+  ctxCanvas.height = background.height * 2;
+  ctxCanvas = ctxCanvas.getContext("2d");
 
-  //console.log(qr.toDataURL());
-  let blob = await qr.image;
-  ctx.drawImage(blob, minX, minY, 83, 83);
+  canvas = new OffscreenCanvas(background.width * 2, background.height * 2);
+  ctx = canvas.getContext("2d");
 
-  const ctxCanvas = document.querySelector("canvas").getContext("2d");
-
-  blob = ctx.getImageData(0, 0, 108, 108);
-  ctxCanvas.putImageData(blob, 0, 0);
-}
-
-function drawQR() {
-  qr = new QRious({
-    element: qrElement,
-    value: "https://webxr.run/XVPRm7NAGPARr#" + index,
-    backgroundAlpha: 1,
-    level: "H",
-  });
-}
-
-async function search() {
-  for (x = 0; x < 5; x++) {
-    for (y = 0; y < 24; y++) {
-      for (index = 0; index <= tamanhoBusca; index++) {
-        await render();
-        if (index % 100 == 0) {
-          console.log("index:", index, "x", x, "y", y);
-          minX = x;
-          minY = y;
-          draw();
-          drawQR();
-        }
-      }
-      console.log("index:", index, "x", x, "y", y);
-      minX = x;
-      minY = y;
-      draw();
-      drawQR();
-    }
-    console.log("index:", index, "x", x, "y", y);
-    minX = x;
-    minY = y;
-    draw();
-    drawQR();
+  for (index = 0; index <= tamanhoBusca; index++) {
+    await render();
   }
+
+  console.log("FIM")
 }
 
 async function render() {
-  ctx.clearRect(0, 0, 108, 108);
-  ctx.drawImage(background, 0, 0);
+  ctx.drawImage(background, 0, 0, background.width * 2, background.height * 2);
 
-  qr = await new QRious({
-    value: "https://webxr.run/XVPRm7NAGPARr#" + index,
-    backgroundAlpha: 0,
+  let qr = new QRious({
+    value:
+      "https://webxr.run/XVPRm7NAGPARr#" + String("0000" + index).slice(-30),
+    backgroundAlpha: 1,
+    padding: 5,
+    size: sizeQR,
     level: "H",
   });
 
-  let img = new Image();
-  img.src = qr.toDataURL();
-  img.onload = function () {
-    ctx.drawImage(img, 0, 0, 83, 83);
-  };
-  
-  //calcDif()
-  async function calcDif() {
-    let dif = 0;
-    let qrCTX = ctx.getImageData(0, 0, 108, 108).data;
+  qr = qr._canvasRenderer.getElement();
+  ctx.putImageData(
+    qr.getContext("2d").getImageData(0, 0, sizeQR, sizeQR),
+    (background.width * 2) / 2 - sizeQR / 2,
+    (background.height * 2) / 2 - sizeQR / 2
+  );
 
-    for (let index = 0; index < backgroundCTX.length; index++) {
-      dif = dif + (backgroundCTX[index] - qrCTX[index]);
-    }
+  ctx.putImageData(
+    mask,
+    (background.width * 2) / 2 - sizeQR / (sizeMask * 2),
+    (background.height * 2) / 2 - sizeQR / (sizeMask * 2)
+  );
 
-    result[index] = dif;
-    let newMin = Math.min(...result);
-    if (min > newMin || min == -1) {
-      min = newMin;
-      value = result.indexOf(newMin);
-      minX = x;
-      minY = y;
-      console.log("index:", index, "min:", min, "x", x, "y", y);
-    }
+  let dif = 0;
+
+  let qrCTX = ctx.getImageData(
+    (background.width * 2) / 2 - sizeQR / 2,
+    (background.height * 2) / 2 - sizeQR / 2,
+    sizeQR,
+    sizeQR
+  );
+
+  for (let i = 0; i < backgroundCTX.data.length; i++) {
+    dif = dif + (backgroundCTX.data[i] - qrCTX.data[i]);
   }
 
-  blob = await cavas.convertToBlob();
-  let a = new FileReader();
-  a.readAsDataURL(blob);
-  a.onload = function (e) {
-    let image = document.createElement("img");
-    image.src = e.target.result;
-    decoder.decodeFromImage(image, (err, res) => {
+  result[index] = dif;
+  let newMin = Math.min(...result);
+
+  // SHOW
+  let show = new FileReader();
+  show.readAsDataURL(await canvas.convertToBlob());
+  show.onload = function (e) {
+    let imag = new Image();
+    imag.src = e.target.result;
+    decoder.decodeFromImage(imag, (err, res) => {
       if (res) {
-        console.log("Resposta: ", res, "index:", index, "min:", min);
-        final = res;
-        minX = x;
-        minY = y;
+        console.log("Resposta:", res, "Index:", index, "min:", min);
         index = tamanhoBusca;
+
+        ctxCanvas.putImageData(
+          ctx.getImageData(0, 0, background.width * 2, background.height * 2),
+          0,
+          0
+        );
       }
     });
   };
+
+  if (min > newMin || min == -1) {
+    min = newMin;
+    console.log("Index:", index, "min:", min);
+    ctxCanvas.putImageData(
+      ctx.getImageData(0, 0, background.width * 2, background.height * 2),
+      0,
+      0
+    );
+  }
 }
