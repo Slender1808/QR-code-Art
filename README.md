@@ -10,6 +10,13 @@ QR-Code-Art representa uma interessante interseção entre design e tecnologia. 
 
 Ao alavancar algoritmos sofisticados, esta ferramenta gera vários códigos QR. Cada código QR é ligeiramente alterado e comparado com a imagem de fundo selecionada. A que mais se assemelha à imagem de fundo é então selecionada, criando um código QR estilizado que ecoa as características visuais da imagem.
 
+## Bibliotecas
+
+Qrious é biblioteca para gerar códigos QR usando canvas HTML5.
+
+QRCodeDecoder é biblioteca para decodificar imagens.
+QCodeDecoder é uma biblioteca de decodificação de código QR escrita.
+
 ---
 
 ## Uso
